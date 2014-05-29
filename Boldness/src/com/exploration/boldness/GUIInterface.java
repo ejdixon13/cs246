@@ -35,7 +35,19 @@ public class GUIInterface extends Application {
     final Text taskErrorMessage = new Text();
     // Error Message area
     final Text runningErrorMessage = new Text();
-	
+    private static GUIInterface guiInterface = new GUIInterface();
+    
+    private GUIInterface() {
+    	guiInterface = this;
+    }
+    
+    private void launchApplication() {
+    	//launch();
+    }
+    
+    public static GUIInterface getInstance() {
+    	return guiInterface;
+    }
 	
 	private static void errorHandler(String error, Text errorMessage) {
 		errorMessage.setFill(Color.RED);
@@ -191,26 +203,28 @@ public class GUIInterface extends Application {
 
 		// GUI Layout
 		BorderPane border = new BorderPane();
-	    
+
 		// Graphical interface for top portion
 		border.setTop(this.topArea());
-	  
-		// Graphical interface for left portion
-	    border.setLeft(this.leftArea());
-	    
-	    // Graphical interface for right portion
-	    border.setRight(this.rightArea());
-	    
-        Scene scene = new Scene(border, 620, 550);
 
-        primaryStage.setTitle("Task Manager");
-        primaryStage.setScene(scene);
-        primaryStage.show();
-		
+		// Graphical interface for left portion
+		border.setLeft(this.leftArea());
+
+		// Graphical interface for right portion
+		border.setRight(this.rightArea());
+
+		Scene scene = new Scene(border, 620, 550);
+
+		primaryStage.setTitle("Task Manager");
+		primaryStage.setScene(scene);
+		primaryStage.show();
+
 	}
 
-	 public static void main(String[] args) {
-	        launch(args);
-	    }
-		
+	public static void main(String[] args) {
+		GUIInterface gui = getInstance();
+		//gui.launchApplication();
+		launch();
+	}
+
 }
