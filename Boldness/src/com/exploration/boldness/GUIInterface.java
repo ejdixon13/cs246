@@ -29,6 +29,12 @@ public class GUIInterface extends Application {
 	private final static String SUBCLASS_ERROR = "Class is not a subclass of Runnable!";
 	private final static String LOCATE_ERROR = "Cannot Find Specified Class!";
 	private static ArrayList<Runnable> runnableObjects = new ArrayList<Runnable>();
+	private ListView<String> runnables = new ListView<String>();
+	private ObservableList<String> items =FXCollections.observableArrayList();
+    // Error Message area
+    final Text taskErrorMessage = new Text();
+    // Error Message area
+    final Text runningErrorMessage = new Text();
 	
 	
 	private static void errorHandler(String error, Text errorMessage) {
@@ -37,12 +43,7 @@ public class GUIInterface extends Application {
 		return;
 	}
 	
-	@Override
-	public void start(Stage primaryStage) throws Exception {
-
-		// GUI Layout
-		BorderPane border = new BorderPane();
-		
+	private HBox topArea(){
 		/* 
 		*	Top Run bar
 		*/
@@ -57,38 +58,7 @@ public class GUIInterface extends Application {
 		hbox.setSpacing(10);
 		
 		hbox.getChildren().addAll(runLabel, userTextField);
-	    
-		border.setTop(hbox);
 		
-		/* 
-		*	Left hand List
-		*/
-		
-		// Runnables label
-		Label runnablesLabel = new Label("Runnables");
-		
-		// Runnables list
-		ListView<String> runnables = new ListView<String>();
-		ObservableList<String> items =FXCollections.observableArrayList();
-		runnables.setItems(items);
-		
-	    // Start Runnables button
-	    Button startBtn = new Button();
-	    startBtn.setPrefWidth(80);
-        startBtn.setText("Start");
-        
-        // Error Message area
-        final Text errorMessage = new Text();
-		
-		// Vbox Layout
-		VBox vboxLeft = new VBox();
-	    vboxLeft.setPadding(new Insets(0,0,0,20)); // Insets (top, right, bottom, left)
-	    vboxLeft.setAlignment(Pos.CENTER);
-	    vboxLeft.setSpacing(8);
-	    vboxLeft.getChildren().addAll(errorMessage, runnablesLabel, runnables, startBtn);
-	  
-	    border.setLeft(vboxLeft);
-
 		/* 
 		*	Event for when text is entered
 		*/
@@ -98,7 +68,7 @@ public class GUIInterface extends Application {
 		    	String runnableText = userTextField.getText();
 		    	
 		    	if(items.contains(runnableText)) {
-		    		GUIInterface.errorHandler(DUPLICATE_ERROR, errorMessage);
+		    		GUIInterface.errorHandler(DUPLICATE_ERROR, taskErrorMessage);
 		    		userTextField.clear();
 		    		return;
 		    	}
@@ -114,12 +84,12 @@ public class GUIInterface extends Application {
 			    		GUIInterface.runnableObjects.add(runnableObject);
 			    	}
 			    	else {
-			    		GUIInterface.errorHandler(SUBCLASS_ERROR, errorMessage);
+			    		GUIInterface.errorHandler(SUBCLASS_ERROR, taskErrorMessage);
 						userTextField.clear();
 						return;
 			    	}
 				} catch (ClassNotFoundException e1) {
-					GUIInterface.errorHandler(LOCATE_ERROR, errorMessage);
+					GUIInterface.errorHandler(LOCATE_ERROR, taskErrorMessage);
 					userTextField.clear();
 					return;
 				} catch (InstantiationException e1) {
@@ -132,13 +102,40 @@ public class GUIInterface extends Application {
 	    		
 		    	
 		    	items.add(userTextField.getText());
-		    	errorMessage.setText("");
+		    	taskErrorMessage.setText("");
 		    	runnables.getSelectionModel().select(items.indexOf(runnableText));
 		    	userTextField.clear();
 		    	
 		    }
 		});
 	    
+	    return hbox;
+	}
+	
+	private VBox leftArea() {
+		/* 
+		*	Left hand List
+		*/
+		
+		// Runnables label
+		Label runnablesLabel = new Label("Runnables");
+		
+		// Runnables list
+		this.runnables.setItems(items);
+		
+	    // Start Runnables button
+	    Button startBtn = new Button();
+	    startBtn.setPrefWidth(80);
+        startBtn.setText("Start");
+        
+
+		
+		// Vbox Layout
+		VBox vboxLeft = new VBox();
+	    vboxLeft.setPadding(new Insets(0,0,0,20)); // Insets (top, right, bottom, left)
+	    vboxLeft.setAlignment(Pos.CENTER);
+	    vboxLeft.setSpacing(8);
+	    vboxLeft.getChildren().addAll(taskErrorMessage, runnablesLabel, this.runnables, startBtn);
 	    
 		/* 
 		*	Event for when Start button pushed
@@ -156,7 +153,10 @@ public class GUIInterface extends Application {
             }
         });
 	    
-
+	    return vboxLeft;
+	}
+	
+	private VBox rightArea() {
 		/* 
 		*	Right hand List
 		*/
@@ -170,8 +170,7 @@ public class GUIInterface extends Application {
 		    "SingleThread", "DoubleThread", "SuiteThread", "Family App Thread");
 		runningThreads.setItems(threads);
 		
-        // Error Message area
-        final Text runningErrorMessage = new Text();
+
 		
 	    // Stop Runnables button
 	    Button stopBtn = new Button();
@@ -184,11 +183,27 @@ public class GUIInterface extends Application {
 	    vboxRight.setSpacing(8);
 	    vboxRight.getChildren().addAll(runningErrorMessage,runningLabel, runningThreads, stopBtn);
 	    
-	    border.setRight(vboxRight);
+	    return vboxRight;
+	}
+	
+	@Override
+	public void start(Stage primaryStage) throws Exception {
+
+		// GUI Layout
+		BorderPane border = new BorderPane();
+	    
+		// Graphical interface for top portion
+		border.setTop(this.topArea());
+	  
+		// Graphical interface for left portion
+	    border.setLeft(this.leftArea());
+	    
+	    // Graphical interface for right portion
+	    border.setRight(this.rightArea());
 	    
         Scene scene = new Scene(border, 620, 550);
 
-        primaryStage.setTitle("Hello World!");
+        primaryStage.setTitle("Task Manager");
         primaryStage.setScene(scene);
         primaryStage.show();
 		
