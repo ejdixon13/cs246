@@ -1,6 +1,7 @@
 package com.exploration.boldness;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -13,6 +14,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -28,21 +30,50 @@ public class GUIInterface extends Application {
 	private final static String DUPLICATE_ERROR = "Runnable Thread already listed!";
 	private final static String SUBCLASS_ERROR = "Class is not a subclass of Runnable!";
 	private final static String LOCATE_ERROR = "Cannot Find Specified Class!";
-	private static ArrayList<Runnable> runnableObjects = new ArrayList<Runnable>();
+	private ArrayList<Runnable> runnableObjects = new ArrayList<Runnable>();
+	private HashMap<String, Runnable> runningObjects = new HashMap<String, Runnable>();
 	private ListView<String> runnables = new ListView<String>();
 	private ObservableList<String> items =FXCollections.observableArrayList();
+	// Running Threads List
+	private ListView<String> runningThreads = new ListView<String>();
+	private ObservableList<String> threads =FXCollections.observableArrayList();
     // Error Message area
     final Text taskErrorMessage = new Text();
     // Error Message area
     final Text runningErrorMessage = new Text();
-    private static GUIInterface guiInterface = new GUIInterface();
     
-    private GUIInterface() {
-    	guiInterface = this;
-    }
+    private ThreadReaper threadReaper = new ThreadReaper();
+    private Stage primStage;
     
-    private void launchApplication() {
-    	//launch();
+    public void setPrimStage(Stage primStage) {
+		this.primStage = primStage;
+	}
+
+	public Stage getPrimStage() {
+		return primStage;
+	}
+
+	private static GUIInterface guiInterface = new GUIInterface();
+    
+    // a static number to add to thread Ids
+    private static Integer threadNum = 0;
+   
+    public HashMap<String, Runnable> getRunningObjects() {
+		return runningObjects;
+	}
+
+	public ObservableList<String> getThreads() {
+		return threads;
+	}
+
+
+
+    public boolean stillRunning(Runnable runObject) {
+    	if(runningObjects.containsValue(runObject)) {
+    		//System.out.println("Object is in here");
+    		return true;
+    	}
+    	return false;
     }
     
     public static GUIInterface getInstance() {
@@ -93,7 +124,7 @@ public class GUIInterface extends Application {
 			    	if (Runnable.class.isAssignableFrom(clazz)){
 			    		System.out.println("This kind of works");
 			    		Runnable runnableObject = (Runnable) clazz.newInstance();
-			    		GUIInterface.runnableObjects.add(runnableObject);
+			    		runnableObjects.add(runnableObject);
 			    	}
 			    	else {
 			    		GUIInterface.errorHandler(SUBCLASS_ERROR, taskErrorMessage);
@@ -155,12 +186,34 @@ public class GUIInterface extends Application {
 	    
 	    startBtn.setOnAction(new EventHandler<ActionEvent>() {
 	    	 
-            @Override
-            public void handle(ActionEvent event) {
+        @Override
+        public void handle(ActionEvent event) {
             	if (!runnables.getSelectionModel().isEmpty()){
             		int objectIndex = runnables.getSelectionModel().getSelectedIndex();
-            		Thread newThread = new Thread(GUIInterface.runnableObjects.get(objectIndex));
-            		newThread.start();
+            		
+					try {
+						// instantiate new object of type class
+						Runnable runningObject = (Runnable)runnableObjects.get(objectIndex).getClass().newInstance();
+	            		Thread newThread = new Thread(runningObject);
+	            		newThread.start();
+	            		
+	            		String threadId = runnables.getSelectionModel().getSelectedItem() + "-Thread_" + threadNum++;
+	            		
+	            		// add thread to our reaper for organized 
+	            		threadReaper.addThread(threadId, newThread);
+	            		
+	            		// add the object to the new running threads
+	            		runningObjects.put(threadId, runningObject);
+	            		threads.add(threadId);
+	            		threadReaper.update(threads, runningObjects);
+					} catch (InstantiationException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IllegalAccessException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
             	}
             }
         });
@@ -176,11 +229,11 @@ public class GUIInterface extends Application {
 	    // Running Label
 		Label runningLabel = new Label("Running Threads");
 		
-		// Running Threads List
-		ListView<String> runningThreads = new ListView<String>();
-		ObservableList<String> threads =FXCollections.observableArrayList (
-		    "SingleThread", "DoubleThread", "SuiteThread", "Family App Thread");
+
 		runningThreads.setItems(threads);
+		
+		// enable multiple selection of items in list
+		runningThreads.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		
 
 		
@@ -195,12 +248,42 @@ public class GUIInterface extends Application {
 	    vboxRight.setSpacing(8);
 	    vboxRight.getChildren().addAll(runningErrorMessage,runningLabel, runningThreads, stopBtn);
 	    
+		/* 
+		*	Event for when Stop button pushed
+		*/
+	    
+	    stopBtn.setOnAction(new EventHandler<ActionEvent>() {
+	    	 
+            @Override
+            public void handle(ActionEvent event) {
+            	if (!runningThreads.getSelectionModel().isEmpty()){
+            		ObservableList<String> selectedItems = runningThreads.getSelectionModel().getSelectedItems();
+            		
+            		// get start and stop index to remove from the thread list
+            		Integer startIndex = threads.indexOf(selectedItems.get(0));
+            		Integer stopIndex = threads.indexOf(selectedItems.get(selectedItems.size() - 1));
+            		
+            		// remove items from running objects
+            		for (String selectedItem : selectedItems) {
+            			runningObjects.remove(selectedItem);
+            		}
+            		
+            		// remove from the thread list
+            		threads.remove(startIndex, stopIndex + 1);
+            	}
+            }
+        });
+	    
 	    return vboxRight;
 	}
 	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 
+		this.setPrimStage(primaryStage);
+		// assign instance for singleton design
+		guiInterface = this;
+		
 		// GUI Layout
 		BorderPane border = new BorderPane();
 
@@ -213,6 +296,10 @@ public class GUIInterface extends Application {
 		// Graphical interface for right portion
 		border.setRight(this.rightArea());
 
+		// Have Thread Reaper running on a different Thread
+		Thread threadReaperInstance = new Thread(this.threadReaper);
+		threadReaperInstance.start();
+		
 		Scene scene = new Scene(border, 620, 550);
 
 		primaryStage.setTitle("Task Manager");
@@ -222,8 +309,6 @@ public class GUIInterface extends Application {
 	}
 
 	public static void main(String[] args) {
-		GUIInterface gui = getInstance();
-		//gui.launchApplication();
 		launch();
 	}
 
