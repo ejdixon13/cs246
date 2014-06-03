@@ -6,7 +6,7 @@ public class RunObject implements Runnable {
 	public void run() {
 		GUIInterface instance = GUIInterface.getInstance();
 		for (int i = 0; i < 100; i++){
-			System.out.print("");
+			System.out.print("This is a Runnable Object");
 			if (!instance.stillRunning(this)){
 				return;
 			}
