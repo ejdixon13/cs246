@@ -25,6 +25,13 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 
+/** 
+*	Title: The ThreadMeister
+*	Author: Eric Dixon
+*	Collaborator: Shane Herd
+*	
+*/
+
 public class GUIInterface extends Application {
 
 	private final static String DUPLICATE_ERROR = "Runnable Thread already listed!";
@@ -67,13 +74,11 @@ public class GUIInterface extends Application {
 	}
 
 
-
+	/** 
+	*	Enables a thread to see if it is still active in the runnable list
+	*/
     public boolean stillRunning(Runnable runObject) {
-    	if(runningObjects.containsValue(runObject)) {
-    		//System.out.println("Object is in here");
-    		return true;
-    	}
-    	return false;
+    	return runningObjects.containsValue(runObject);
     }
     
     public static GUIInterface getInstance() {
@@ -86,10 +91,10 @@ public class GUIInterface extends Application {
 		return;
 	}
 	
+	/** 
+	*	Top Run bar Method
+	*/
 	private HBox topArea(){
-		/* 
-		*	Top Run bar
-		*/
 		
 		// Run bar
 		Label runLabel = new Label("Enter Runnable:");
@@ -155,10 +160,11 @@ public class GUIInterface extends Application {
 	    return hbox;
 	}
 	
+	/** 
+	*	Method that will create the Left hand List element 
+	*/
 	private VBox leftArea() {
-		/* 
-		*	Left hand List
-		*/
+
 		
 		// Runnables label
 		Label runnablesLabel = new Label("Runnables");
@@ -221,10 +227,10 @@ public class GUIInterface extends Application {
 	    return vboxLeft;
 	}
 	
+	/** 
+	*	Method for creating the right area containing our Running tasks list
+	*/
 	private VBox rightArea() {
-		/* 
-		*	Right hand List
-		*/
 	    
 	    // Running Label
 		Label runningLabel = new Label("Running Threads");
@@ -277,6 +283,9 @@ public class GUIInterface extends Application {
 	    return vboxRight;
 	}
 	
+	/** 
+	*	Start method will perform all necessary GUI initialization	
+	*/
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 
